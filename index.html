@@ -2,1311 +2,1189 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>팡팡! 구구단 어드벤처</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>수업용 학생 추첨 룰렛</title>
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Canvas Confetti CDN for Celebration Effect -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts: Pretendard/Inter style font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;600;800&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            jua: ['"Jua"', 'sans-serif'],
+            sans: ['"Noto Sans KR"', 'sans-serif'],
+          },
+          boxShadow: {
+            'glow': '0 0 25px rgba(245, 158, 11, 0.45)',
+            'roulette': '0 20px 45px -5px rgba(0, 0, 0, 0.6), 0 0 0 10px #f8fafc, 0 0 0 18px #d97706',
+            'chalkboard': 'inset 0 0 100px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.4)',
+          }
+        }
+      }
+    }
+  </script>
+
   <style>
-    * {
+    body {
       font-family: 'Noto Sans KR', sans-serif;
       user-select: none;
-      -webkit-tap-highlight-color: transparent;
+      /* Chalkboard texture simulation */
+      background: radial-gradient(circle at 50% 40%, #1e4535 0%, #133024 60%, #0a1b14 100%);
     }
-    .font-game {
-      font-family: 'Jua', cursive, sans-serif;
+    .font-fun {
+      font-family: 'Jua', cursive;
     }
-    @keyframes bounce-short {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
+    /* Blackboard wooden frame effect */
+    .chalkboard-frame {
+      border: 14px solid #854d0e;
+      border-image: linear-gradient(to bottom right, #a16207, #713f12, #451a03) 1;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 15px 30px rgba(0,0,0,0.7);
     }
-    @keyframes pulse-ring {
-      0% { transform: scale(0.95); opacity: 0.8; }
-      50% { transform: scale(1.05); opacity: 0.4; }
-      100% { transform: scale(0.95); opacity: 0.8; }
+    /* Chalk typography texture */
+    .chalk-text {
+      text-shadow: 1px 1px 2px rgba(255,255,255,0.4), 0 0 10px rgba(255,255,255,0.2);
     }
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20%, 60% { transform: translateX(-6px); }
-      40%, 80% { transform: translateX(6px); }
+    /* Pointer bobbing animation */
+    @keyframes pointerBob {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(6px) scale(1.08); }
     }
-    @keyframes alert-pulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-      50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    .pointer-active {
+      animation: pointerBob 0.15s infinite ease-in-out;
     }
-    .animate-shake {
-      animation: shake 0.35s ease-in-out;
+    /* Pulse glow button */
+    @keyframes spinBtnGlow {
+      0%, 100% { box-shadow: 0 0 22px rgba(245, 158, 11, 0.6), inset 0 2px 4px rgba(255,255,255,0.5); }
+      50% { box-shadow: 0 0 38px rgba(239, 68, 68, 0.9), inset 0 2px 6px rgba(255,255,255,0.7); }
     }
-    .animate-bounce-short {
-      animation: bounce-short 1.2s infinite ease-in-out;
+    .spin-btn-animated {
+      animation: spinBtnGlow 1.6s infinite;
     }
-    .timer-danger {
-      animation: alert-pulse 0.8s infinite;
+    /* Fanfare celebration flash */
+    @keyframes fanfarePop {
+      0% { transform: scale(0.6) rotate(-10deg); opacity: 0; }
+      50% { transform: scale(1.15) rotate(5deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
     }
-    .btn-3d {
-      transition: all 0.1s ease;
-      box-shadow: 0 6px 0 rgba(0, 0, 0, 0.2);
-    }
-    .btn-3d:active {
-      transform: translateY(4px);
-      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
-    }
-    /* Confetti Canvas overlay */
-    #confettiCanvas {
-      pointer-events: none;
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 100;
+    .fanfare-burst {
+      animation: fanfarePop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     }
   </style>
 </head>
-<body class="bg-gradient-to-br from-amber-100 via-orange-50 to-pink-100 min-h-screen text-slate-800 flex flex-col items-center justify-between p-2 sm:p-4 overflow-x-hidden">
 
-  <canvas id="confettiCanvas"></canvas>
+<body class="min-h-screen text-slate-100 flex flex-col items-center justify-between p-2 sm:p-5 overflow-x-hidden relative">
 
-  <!-- 상단 네비게이션 헤더 -->
-  <header class="w-full max-w-md mx-auto flex items-center justify-between py-2 px-3 bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-amber-200 mb-2">
-    <div class="flex items-center space-x-2">
-      <span class="text-2xl animate-bounce-short">⭐</span>
-      <div>
-        <h1 class="text-lg font-game text-amber-600 tracking-wide leading-none">팡팡! 구구단</h1>
-        <p class="text-[10px] text-slate-500 font-semibold">어드벤처</p>
+  <!-- Classroom Chalkboard Decorative Top Bar: Single Row Layout -->
+  <header class="w-full max-w-5xl flex items-center justify-between gap-2 sm:gap-3 py-2 sm:py-2.5 px-3 sm:px-5 bg-emerald-950/80 backdrop-blur-md rounded-2xl border border-emerald-600/40 shadow-xl flex-nowrap overflow-x-auto whitespace-nowrap">
+    <!-- Left: Title & YouTube Motto in a Single Row -->
+    <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+      <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-400 flex items-center justify-center text-emerald-950 font-fun text-lg sm:text-xl shadow-md border border-amber-200 shrink-0">
+        <i class="fa-solid fa-chalkboard-user"></i>
+      </div>
+      <div class="flex items-center gap-2">
+        <h1 class="text-base sm:text-lg md:text-xl font-fun tracking-wide text-amber-300 chalk-text whitespace-nowrap">칠판 발표자 룰렛</h1>
+        <span class="hidden md:inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-bold bg-red-600/30 text-red-200 border border-red-500/50 rounded-full whitespace-nowrap">
+          <i class="fa-brands fa-youtube text-red-400"></i>
+          <span>구독·좋아요·알림 설정 🔔</span>
+        </span>
       </div>
     </div>
-    <div class="flex items-center space-x-2">
-      <!-- 사운드 토글 버튼 -->
-      <button id="soundToggleBtn" class="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 transition" title="소리 켜기/끄기">
-        <span id="soundIcon" class="text-xl">🔊</span>
+
+    <!-- Right: Action Buttons in a Clean Single Line -->
+    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+      <!-- Random 10-Assignment Button -->
+      <button id="quickRandomAssignBtn" class="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-fun text-xs sm:text-sm font-bold transition transform active:scale-95 shadow-md border border-amber-300 shrink-0 whitespace-nowrap">
+        <i class="fa-solid fa-dice text-sm sm:text-base"></i>
+        <span>랜덤 10명 배정</span>
       </button>
-      <!-- 메인 메뉴 복귀 버튼 -->
-      <button id="homeBtn" class="hidden p-2 rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-700 font-game text-sm transition flex items-center gap-1">
-        <span>🏠</span> 메뉴
+
+      <!-- Roster Button -->
+      <button id="openRosterBtn" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-teal-700 hover:bg-teal-600 border border-teal-500/50 text-xs sm:text-sm font-semibold transition active:scale-95 shadow-md shrink-0 whitespace-nowrap">
+        <i class="fa-solid fa-users text-amber-300"></i>
+        <span>명단 (<span id="candidateCountBadge">0</span>명)</span>
+      </button>
+
+      <!-- Sound Toggle -->
+      <button id="soundToggleBtn" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-emerald-900/80 hover:bg-emerald-800 border border-emerald-700 text-xs sm:text-sm font-semibold transition active:scale-95 shadow shrink-0 whitespace-nowrap" title="효과음 토글">
+        <i id="soundIcon" class="fa-solid fa-volume-high text-amber-300"></i>
+        <span id="soundText" class="hidden sm:inline">소리 켬</span>
       </button>
     </div>
   </header>
 
-  <main id="appContainer" class="w-full max-w-md mx-auto flex-1 flex flex-col justify-center items-center relative">
+  <!-- Main Center Section -->
+  <main class="w-full max-w-5xl flex-1 flex flex-col items-center justify-center my-auto py-2">
     
-    <!-- 1. 메인 메뉴 화면 (LOBBY) -->
-    <section id="lobbyScreen" class="w-full flex flex-col items-center gap-4 py-2">
-      <div class="text-center relative my-2">
-        <div class="inline-block p-4 bg-white rounded-3xl shadow-lg border-4 border-amber-300 transform -rotate-1 hover:rotate-0 transition">
-          <div class="text-5xl mb-1">🎮✨</div>
-          <h2 class="text-3xl font-game text-amber-600 drop-shadow-sm">구구단 팡팡!</h2>
-          <p class="text-xs text-slate-500 font-bold mt-1">신나게 놀면서 마스터하는 곱셈 마법</p>
-        </div>
-      </div>
-
-      <!-- 모드 선택 카드 목록 -->
-      <div class="w-full grid grid-cols-1 gap-3 px-1">
-        <!-- 스테이지 모드 -->
-        <button onclick="Game.openStageSelect()" class="btn-3d w-full p-4 rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-400 text-white font-game text-left flex items-center justify-between border-b-4 border-amber-600">
-          <div class="flex items-center gap-3">
-            <span class="text-3xl bg-white/20 p-2 rounded-xl">🗺️</span>
-            <div>
-              <div class="text-xl">단별 탐험 모드 (하트 3개 & 10문제)</div>
-              <div class="text-xs opacity-90 font-normal">문제당 6초! 기회 3번 안에 10문제 완주하기</div>
-            </div>
-          </div>
-          <span class="text-xl font-bold bg-white/30 px-3 py-1 rounded-full">도전</span>
-        </button>
-
-        <!-- 타임어택 모드 -->
-        <button onclick="Game.startMode('timeAttack')" class="btn-3d w-full p-4 rounded-2xl bg-gradient-to-r from-rose-400 to-pink-500 text-white font-game text-left flex items-center justify-between border-b-4 border-rose-700">
-          <div class="flex items-center gap-3">
-            <span class="text-3xl bg-white/20 p-2 rounded-xl">⚡</span>
-            <div>
-              <div class="text-xl">스피드 60초 어택 (총 30문제 챌린지)</div>
-              <div class="text-xs opacity-90 font-normal">시간 내 최대 30문제에 도전하고 최고 점수 기록!</div>
-            </div>
-          </div>
-          <span class="text-xl font-bold bg-white/30 px-3 py-1 rounded-full">GO</span>
-        </button>
-
-        <!-- 서바이벌 모드 -->
-        <button onclick="Game.startMode('survival')" class="btn-3d w-full p-4 rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-500 text-white font-game text-left flex items-center justify-between border-b-4 border-emerald-700">
-          <div class="flex items-center gap-3">
-            <span class="text-3xl bg-white/20 p-2 rounded-xl">❤️</span>
-            <div>
-              <div class="text-xl">익스트림 서바이벌 (초고속 4초)</div>
-              <div class="text-xs opacity-90 font-normal">문제당 4초 초긴박 스피드! 하트 3개로 한계 도전</div>
-            </div>
-          </div>
-          <span class="text-xl font-bold bg-white/30 px-3 py-1 rounded-full">생존</span>
-        </button>
-
-        <!-- 구구단 학습표 -->
-        <button onclick="Game.openChart()" class="btn-3d w-full p-3.5 rounded-2xl bg-gradient-to-r from-sky-400 to-indigo-500 text-white font-game text-left flex items-center justify-between border-b-4 border-sky-700">
-          <div class="flex items-center gap-3">
-            <span class="text-2xl bg-white/20 p-2 rounded-xl">📖</span>
-            <div>
-              <div class="text-lg">구구단 비밀 수첩</div>
-              <div class="text-xs opacity-90 font-normal">2단부터 9단까지 한눈에 훑어보기</div>
-            </div>
-          </div>
-          <span class="text-sm font-bold bg-white/30 px-3 py-1 rounded-full">보기</span>
-        </button>
-      </div>
-
-      <!-- 내 최고 기록 요약 -->
-      <div class="w-full bg-white/70 backdrop-blur rounded-2xl p-3 border border-amber-200 mt-1 flex justify-around text-center text-xs">
-        <div>
-          <span class="text-slate-400 block font-semibold">최고 콤보</span>
-          <span id="bestComboText" class="text-base font-game text-amber-600">0 COMBO</span>
-        </div>
-        <div class="w-px bg-slate-200"></div>
-        <div>
-          <span class="text-slate-400 block font-semibold">스피드 최고점</span>
-          <span id="bestScoreText" class="text-base font-game text-rose-500">0 점</span>
-        </div>
-        <div class="w-px bg-slate-200"></div>
-        <div>
-          <span class="text-slate-400 block font-semibold">정복한 단</span>
-          <span id="clearedStagesText" class="text-base font-game text-teal-600">0 / 8 단</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- 2. 단 선택 화면 (STAGE SELECT) -->
-    <section id="stageSelectScreen" class="w-full hidden flex-col items-center gap-3 py-2">
-      <div class="text-center">
-        <h3 class="text-2xl font-game text-amber-700">단계를 선택하세요</h3>
-        <p class="text-xs text-slate-500">원하는 구구단을 골라 별 3개 마스터에 도전하세요!</p>
-      </div>
-
-      <!-- 2단 ~ 9단 및 마스터(종합) 버튼 그리드 -->
-      <div class="w-full grid grid-cols-4 gap-3 my-2" id="stageGrid">
-        <!-- JS로 동적 생성 -->
-      </div>
-
-      <div class="w-full">
-        <button onclick="Game.startStage('all')" class="btn-3d w-full p-3 rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-game text-base border-b-4 border-purple-800 flex items-center justify-center gap-2">
-          <span>👑</span> <span>전체 랜덤 보스전 (2~9단 통합)</span>
-        </button>
-      </div>
-
-      <button onclick="Game.showScreen('lobbyScreen')" class="mt-2 text-sm text-slate-500 hover:text-slate-800 font-game underline">
-        ← 메인 메뉴로 돌아가기
-      </button>
-    </section>
-
-    <!-- 3. 실제 게임 진행 화면 (IN-GAME PLAY) -->
-    <section id="gamePlayScreen" class="w-full hidden flex-col items-center gap-2 py-1">
+    <!-- Central Roulette Stage -->
+    <div class="relative flex flex-col items-center justify-center p-2 sm:p-4">
       
-      <!-- 상단 상태 바 (모드 정보, 하트, 남은 문제, 점수) -->
-      <div class="w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-3 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <span id="gameModeBadge" class="bg-amber-100 text-amber-800 font-game text-xs px-2.5 py-1 rounded-full">스테이지</span>
-          <div id="livesContainer" class="flex gap-0.5 text-base">
-            <span>❤️</span><span>❤️</span><span>❤️</span>
-          </div>
+      <!-- Top Indicator Arrow / Needle -->
+      <div id="roulettePointer" class="absolute -top-3 z-30 flex flex-col items-center pointer-events-none drop-shadow-[0_8px_14px_rgba(0,0,0,0.8)] transition-transform">
+        <div class="w-9 h-9 sm:w-11 sm:h-11 bg-gradient-to-b from-yellow-300 via-amber-400 to-amber-500 rounded-full flex items-center justify-center border-2 border-white shadow-lg">
+          <i class="fa-solid fa-bell text-emerald-950 text-base"></i>
         </div>
-
-        <!-- 남은 문제 수 배지 -->
-        <div class="flex items-center gap-2">
-          <div id="questionLimitBadge" class="font-game text-xs bg-slate-100 px-2 py-1 rounded-lg text-slate-600">
-            남은 문제: <span id="remainingQuestionsText" class="text-amber-600 font-bold">10</span>
-          </div>
-        </div>
-
-        <!-- 점수 -->
-        <div class="text-right">
-          <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">SCORE</div>
-          <div id="scoreText" class="font-game text-xl text-slate-800">0</div>
-        </div>
+        <div class="w-0 h-0 border-l-[15px] border-l-transparent border-r-[15px] border-r-transparent border-t-[26px] border-t-amber-400 -mt-1.5 filter drop-shadow"></div>
       </div>
 
-      <!-- 대형 시간 제한 막대 (타이머 프로그레스 바) -->
-      <div class="w-full bg-white/90 backdrop-blur rounded-2xl p-2.5 border border-amber-200 shadow-sm flex flex-col gap-1.5">
-        <div class="flex items-center justify-between px-1">
-          <div class="flex items-center gap-1.5 font-game text-xs text-slate-600">
-            <span class="text-base animate-pulse">⏱️</span>
-            <span id="timerBarLabel" class="font-bold">남은 시간</span>
-          </div>
-          <span id="timerTextLarge" class="font-game text-sm text-rose-500 font-bold tracking-wider">6.0초</span>
-        </div>
+      <!-- Canvas Wrapper with Glowing Border Frame -->
+      <div class="relative rounded-full shadow-roulette p-1.5 bg-emerald-950/40 backdrop-blur-sm transition-transform duration-300 hover:scale-[1.01]">
+        <canvas id="rouletteCanvas" width="560" height="560" class="max-w-[320px] max-h-[320px] sm:max-w-[430px] sm:max-h-[430px] md:max-w-[500px] md:max-h-[500px] rounded-full"></canvas>
         
-        <!-- 실시간 막대 바 트랙 -->
-        <div class="w-full bg-slate-100 rounded-full h-4 overflow-hidden p-0.5 border border-slate-300 relative shadow-inner">
-          <div id="questionTimeBar" class="h-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500 rounded-full transition-all duration-75 w-full shadow-sm"></div>
-        </div>
-      </div>
-
-      <!-- 콤보 및 피버 인디케이터 -->
-      <div class="h-6 flex items-center justify-center">
-        <div id="comboIndicator" class="opacity-0 transition duration-200 transform scale-90 font-game text-sm text-pink-600 bg-pink-100 px-3 py-0.5 rounded-full border border-pink-300">
-          🔥 <span id="comboCount">0</span> 콤보!
-        </div>
-      </div>
-
-      <!-- 문제 카드 (Quiz Card) -->
-      <div id="questionCard" class="w-full bg-white rounded-3xl shadow-md border-4 border-amber-200 p-6 flex flex-col items-center justify-center relative overflow-hidden transition-all duration-150">
-        <!-- 콤보 피버 배경 이펙트용 바 -->
-        <div id="feverProgress" class="absolute bottom-0 left-0 h-1.5 bg-gradient-to-r from-amber-400 to-rose-500 w-0 transition-all duration-300"></div>
-
-        <div class="text-xs text-amber-600 font-bold mb-1 flex items-center gap-1.5" id="questionSubtext">
-          <span>문제 1 / 10</span>
-        </div>
-        
-        <!-- 수식 표시 -->
-        <div class="flex items-center justify-center gap-3 my-2 font-game text-5xl sm:text-6xl text-slate-800 tracking-wider">
-          <span id="numA" class="text-amber-500">7</span>
-          <span class="text-slate-400 text-3xl">×</span>
-          <span id="numB" class="text-indigo-500">8</span>
-          <span class="text-slate-400 text-3xl">=</span>
-          <span id="userAnswerDisplay" class="text-amber-600 border-b-4 border-dashed border-amber-400 min-w-[70px] text-center">?</span>
-        </div>
-
-        <!-- 오답 시 친절한 정답 안내 팝업 바 -->
-        <div id="answerRevealBanner" class="hidden w-full mt-2 py-1.5 px-3 bg-rose-50 border border-rose-300 rounded-xl text-center font-game text-rose-600 text-sm animate-bounce-short">
-          정답은 <span id="revealedCorrectNumber" class="text-lg font-bold text-rose-700 underline">56</span> 입니다!
-        </div>
-
-        <!-- 피드백 말풍선/이모지 -->
-        <div id="feedbackBadge" class="absolute top-2 right-3 text-xl opacity-0 transform translate-y-1 transition duration-200">
-          ✨
-        </div>
-      </div>
-
-      <!-- 입력 컨트롤러 전환 바 (객관식 4지선다 vs 키패드) -->
-      <div class="w-full flex items-center justify-between px-2 pt-1 text-xs">
-        <span class="text-slate-400 font-bold">입력 방식</span>
-        <div class="bg-slate-200 p-0.5 rounded-xl flex gap-1 font-game">
-          <button id="inputModeChoiceBtn" onclick="Game.setInputMode('choice')" class="px-2.5 py-1 rounded-lg bg-white shadow-xs text-slate-800 transition">선택형 (4지선다)</button>
-          <button id="inputModeKeypadBtn" onclick="Game.setInputMode('keypad')" class="px-2.5 py-1 rounded-lg text-slate-500 transition">키패드 직접입력</button>
-        </div>
-      </div>
-
-      <!-- 4지선다 보기 영역 -->
-      <div id="choiceContainer" class="w-full grid grid-cols-2 gap-2.5 my-2">
-        <button onclick="Game.submitChoice(0)" class="choice-btn btn-3d bg-white hover:bg-amber-50 text-slate-800 font-game text-2xl py-4 rounded-2xl border-2 border-amber-200">0</button>
-        <button onclick="Game.submitChoice(1)" class="choice-btn btn-3d bg-white hover:bg-amber-50 text-slate-800 font-game text-2xl py-4 rounded-2xl border-2 border-amber-200">0</button>
-        <button onclick="Game.submitChoice(2)" class="choice-btn btn-3d bg-white hover:bg-amber-50 text-slate-800 font-game text-2xl py-4 rounded-2xl border-2 border-amber-200">0</button>
-        <button onclick="Game.submitChoice(3)" class="choice-btn btn-3d bg-white hover:bg-amber-50 text-slate-800 font-game text-2xl py-4 rounded-2xl border-2 border-amber-200">0</button>
-      </div>
-
-      <!-- 숫자 키패드 영역 (직접 입력 모드) -->
-      <div id="keypadContainer" class="w-full hidden grid-cols-3 gap-2 my-2">
-        <button onclick="Game.pressKey(1)" class="btn-3d bg-white text-slate-700 font-game text-2xl py-3 rounded-xl border border-slate-200">1</button>
-        <button onclick="Game.pressKey(2)" class="btn-3d bg-white text-slate-700 font-game text-2xl py-3 rounded-xl border border-slate-200">2</button>
-        <button onclick="Game.pressKey(3)" class="btn-3d bg-white text-slate-700 font-game text-2xl py-3 rounded-xl border border-slate-200">3</button>
-        <button onclick="Game.pressKey(4)" class="btn-3d bg-white text-slate-700 font-game text-2xl py-3 rounded-xl border border-slate-200">4</button>
-        <button onclick="Game.pressKey(5)" class="btn-3d bg-white text-slate-700 font-game text-2xl py-3 rounded-xl border border-slate-200">5</button>
-        <button onclick="Game.pressKey(6)" class="btn-3d bg-white text-slate-700 font-game text-2xl py-3 rounded-xl border border-slate-200">6</button>
-        <button onclick="Game.pressKey(7)" class="btn-3d bg-white text-slate-700 font-game text-2xl py-3 rounded-xl border border-slate-200">7</button>
-        <button onclick="Game.pressKey(8)" class="btn-3d bg-white text-slate-700 font-game text-2xl py-3 rounded-xl border border-slate-200">8</button>
-        <button onclick="Game.pressKey(9)" class="btn-3d bg-white text-slate-700 font-game text-2xl py-3 rounded-xl border border-slate-200">9</button>
-        <button onclick="Game.pressKey('clear')" class="btn-3d bg-rose-50 text-rose-600 font-game text-lg py-3 rounded-xl border border-rose-200">지움</button>
-        <button onclick="Game.pressKey(0)" class="btn-3d bg-white text-slate-700 font-game text-2xl py-3 rounded-xl border border-slate-200">0</button>
-        <button onclick="Game.pressKey('enter')" class="btn-3d bg-amber-500 text-white font-game text-lg py-3 rounded-xl border-b-4 border-amber-700">확인</button>
-      </div>
-
-    </section>
-
-    <!-- 4. 결과 발표 모달 화면 (RESULT OVERLAY) -->
-    <div id="resultModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-      <div class="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl border-4 border-amber-300 text-center transform scale-95 transition-all duration-200" id="modalCard">
-        <div id="resultTrophy" class="text-6xl mb-2 animate-bounce-short">🏆</div>
-        <h3 id="resultTitle" class="text-2xl font-game text-slate-800">미션 완료!</h3>
-        <p id="resultSubtitle" class="text-xs text-slate-500 mb-4">대단해요! 구구단 실력이 쑥쑥 자랐어요!</p>
-
-        <!-- 별점 표시 (스테이지 모드 전용) -->
-        <div id="starsRow" class="flex justify-center gap-2 text-3xl mb-4">
-          <span id="star1">⭐</span>
-          <span id="star2">⭐</span>
-          <span id="star3">⭐</span>
-        </div>
-
-        <!-- 점수 상세 표 -->
-        <div class="bg-amber-50 rounded-2xl p-3 border border-amber-100 text-sm space-y-1.5 mb-5 font-semibold text-slate-600">
-          <div class="flex justify-between">
-            <span>획득 점수</span>
-            <span id="modalScore" class="font-game text-amber-600 text-base">0점</span>
-          </div>
-          <div class="flex justify-between">
-            <span>맞힌 문제</span>
-            <span id="modalCorrect" class="text-slate-800">0 / 0</span>
-          </div>
-          <div class="flex justify-between">
-            <span>최대 콤보</span>
-            <span id="modalMaxCombo" class="text-pink-600 font-game">0 COMBO</span>
-          </div>
-          <div class="flex justify-between">
-            <span>정답률</span>
-            <span id="modalAccuracy" class="text-emerald-600">100%</span>
+        <!-- Center Hub Pin -->
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-amber-500 via-yellow-300 to-white shadow-[0_4px_20px_rgba(0,0,0,0.6)] flex items-center justify-center border-4 border-emerald-950 pointer-events-none z-20">
+          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-emerald-950 flex items-center justify-center text-amber-400 text-sm font-fun">
+            <i class="fa-solid fa-thumbs-up"></i>
           </div>
         </div>
-
-        <!-- 액션 버튼들 -->
-        <div class="flex gap-2">
-          <button onclick="Game.retryCurrentMode()" class="btn-3d flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-white font-game rounded-xl border-b-4 border-amber-700">다시 하기</button>
-          <button onclick="Game.showScreen('lobbyScreen'); Game.closeResultModal();" class="btn-3d flex-1 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-game rounded-xl">메인으로</button>
-        </div>
       </div>
+
     </div>
 
-    <!-- 5. 구구단 비밀수첩 (학습용 표 뷰어) -->
-    <section id="chartScreen" class="w-full hidden flex-col items-center gap-3 py-1">
-      <div class="w-full flex items-center justify-between">
-        <h3 class="text-xl font-game text-indigo-700">📖 구구단 비밀수첩</h3>
-        <button onclick="Game.showScreen('lobbyScreen')" class="text-xs bg-slate-200 px-3 py-1.5 rounded-lg font-game">닫기</button>
+    <!-- Spin Button & Sub Controls -->
+    <div class="flex flex-col items-center gap-3.5 mt-3 sm:mt-5 z-10 w-full px-4">
+      <button id="spinBtn" class="group relative inline-flex items-center justify-center px-10 sm:px-16 py-3.5 sm:py-4 overflow-hidden rounded-full font-fun text-2xl sm:text-3xl text-white bg-gradient-to-r from-red-600 via-rose-500 to-amber-500 shadow-2xl transition duration-300 transform active:scale-95 spin-btn-animated border-4 border-amber-200 whitespace-nowrap">
+        <span class="relative z-10 flex items-center gap-3 tracking-wider drop-shadow-md whitespace-nowrap">
+          <i class="fa-solid fa-play transition-transform group-hover:scale-125 duration-300"></i>
+          <span>돌리기! (발표자 추첨)</span>
+        </span>
+        <div class="absolute inset-0 bg-white/25 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      </button>
+
+      <!-- Convenient Settings Row -->
+      <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs sm:text-sm bg-emerald-950/80 backdrop-blur px-5 py-2.5 rounded-full border border-emerald-700/60 shadow-lg whitespace-nowrap">
+        <button id="btnTriggerRandom10" class="text-amber-300 hover:text-white flex items-center gap-1.5 font-bold transition whitespace-nowrap">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span>랜덤 10명 즉시 배정</span>
+        </button>
+        <span class="text-emerald-700">|</span>
+        <label class="flex items-center gap-2 cursor-pointer text-slate-200 hover:text-white select-none whitespace-nowrap">
+          <input type="checkbox" id="excludePickedToggle" class="w-4 h-4 rounded text-amber-500 focus:ring-0 cursor-pointer accent-amber-500">
+          <span>당첨 학생 명단에서 제외</span>
+        </label>
+        <span class="text-emerald-700">|</span>
+        <button id="quickShuffleBtn" class="text-slate-300 hover:text-amber-300 flex items-center gap-1.5 transition whitespace-nowrap">
+          <i class="fa-solid fa-shuffle"></i>
+          <span>순서 섞기</span>
+        </button>
       </div>
 
-      <!-- 단 선택 탭 (2단 ~ 9단) -->
-      <div class="w-full flex gap-1 overflow-x-auto pb-1" id="chartTabs">
-        <!-- JS로 2단 ~ 9단 탭 생성 -->
-      </div>
-
-      <!-- 해당 단의 곱셈 리스트 -->
-      <div id="chartContent" class="w-full bg-white rounded-2xl p-4 shadow-sm border border-indigo-100 flex flex-col gap-2 max-h-[55vh] overflow-y-auto">
-        <!-- JS로 행 생성 -->
-      </div>
-
-      <p class="text-[11px] text-slate-400 text-center">원하는 단을 클릭하여 소리 내어 읽어보세요!</p>
-    </section>
-
+    </div>
   </main>
 
-  <!-- 하단 푸터 -->
-  <footer class="w-full max-w-md mx-auto text-center py-2 text-[11px] text-slate-400">
-    팡팡! 구구단 어드벤처 &bull; 언제 어디서나 신나는 두뇌 플레이
+  <!-- Fanfare Celebration Banner Overlay (Activates at wheel stop) -->
+  <div id="fanfareBanner" class="fixed top-12 z-50 pointer-events-none hidden transition-all duration-300">
+    <div class="fanfare-burst bg-gradient-to-r from-amber-400 via-red-500 to-yellow-300 p-1 rounded-2xl shadow-[0_0_50px_rgba(245,158,11,0.9)]">
+      <div class="bg-slate-950 px-8 py-3 rounded-xl flex items-center gap-3 text-amber-300 font-fun text-2xl sm:text-3xl border border-amber-300">
+        <span>🎺</span>
+        <span class="tracking-widest">🎉 빵 빠 레 ! 당 첨 ! 🎉</span>
+        <span>🎺</span>
+      </div>
+    </div>
+  </div>
+
+  <footer class="w-full text-center py-2 text-xs text-emerald-300/60">
+    TIP: 스페이스바를 눌러도 룰렛을 돌릴 수 있습니다. | 📢 유튜브 3종 세트: <strong>구독, 좋아요, 알림 설정</strong> 잊지 마세요!
   </footer>
 
-  <script>
-    /* 사운드 관리자: Web Audio API 기반 순수 신디사이저 (외부 오디오 파일 없이 즉시 작동) */
-    const SoundEngine = {
-      ctx: null,
-      enabled: true,
+  <!-- Notification Toast message box -->
+  <div id="toast" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900/95 border border-emerald-500/50 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 z-50 pointer-events-none">
+    <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+    <span id="toastMsg" class="text-sm font-medium">안내 메시지</span>
+  </div>
 
-      init() {
+  <!-- Winner Announcement Dialog Modal -->
+  <div id="winnerModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-gradient-to-b from-emerald-950 via-slate-950 to-slate-900 border-2 border-amber-400 rounded-3xl p-6 sm:p-8 max-w-sm sm:max-w-md w-full text-center shadow-[0_0_60px_rgba(245,158,11,0.5)] transform scale-90 transition-transform duration-300">
+      <div class="w-24 h-24 mx-auto -mt-18 bg-gradient-to-tr from-amber-400 via-yellow-300 to-amber-500 rounded-full flex items-center justify-center text-emerald-950 text-5xl shadow-2xl border-4 border-slate-900 animate-bounce">
+        <i class="fa-solid fa-trophy"></i>
+      </div>
+
+      <div class="mt-4 inline-flex items-center gap-2 px-3 py-1 bg-red-600/30 border border-red-500/40 rounded-full text-red-300 text-xs font-bold">
+        <span>📢 구독! 좋아요! 알림 설정!</span>
+      </div>
+
+      <p class="text-amber-300 font-fun text-xl mt-3">축하합니다! 이번 발표자는?</p>
+      <div id="winnerName" class="text-4xl sm:text-5xl font-fun text-white my-4 py-4 px-4 bg-white/10 rounded-2xl border border-white/20 tracking-wider text-amber-200 drop-shadow-lg break-words">
+        김철수
+      </div>
+
+      <!-- Gemini AI Mission Box inside Winner Dialog -->
+      <div class="mb-4 bg-emerald-950/80 border border-amber-400/30 rounded-2xl p-3 text-left shadow-inner">
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <div class="flex items-center gap-1.5 text-xs font-bold text-amber-300">
+            <i class="fa-solid fa-sparkles text-purple-400"></i>
+            <span>✨ Gemini AI 즉석 발표 미션</span>
+          </div>
+          <!-- Subject selector for AI Mission -->
+          <select id="aiMissionSubject" class="bg-slate-900 text-[11px] text-emerald-200 border border-emerald-700/60 rounded-lg px-2 py-1 focus:outline-none focus:border-amber-400">
+            <option value="아이스브레이킹/창의력">재미있는 아이스브레이킹</option>
+            <option value="국어">국어/어휘/독서</option>
+            <option value="수학">수학/논리 퀴즈</option>
+            <option value="사회/역사">사회/역사 상식</option>
+            <option value="과학">과학/자연 호기심</option>
+            <option value="영어">영어 한마디 챌린지</option>
+          </select>
+        </div>
+
+        <!-- AI Mission Content / Loading State -->
+        <div id="aiMissionBox" class="text-xs text-slate-200 bg-slate-950/70 p-2.5 rounded-xl border border-slate-800 min-h-[48px] flex items-center justify-between gap-2">
+          <span id="aiMissionText" class="leading-relaxed">선생님의 질문에 당당하고 멋지게 답해 보세요! 👏</span>
+          <button id="btnRegenAiMission" class="shrink-0 text-amber-300 hover:text-white px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/40 border border-amber-400/40 rounded-lg transition active:scale-95 text-[11px] font-semibold flex items-center gap-1" title="새로운 AI 미션 생성">
+            <i class="fa-solid fa-arrows-rotate"></i>
+            <span>새 미션</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 justify-center">
+        <button id="closeWinnerBtn" class="flex-1 py-3 px-4 rounded-xl font-bold bg-emerald-700 hover:bg-emerald-600 text-white transition active:scale-95 shadow">
+          확인
+        </button>
+        <button id="spinAgainBtn" class="flex-1 py-3 px-4 rounded-xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 transition active:scale-95 shadow">
+          다시 돌리기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student Roster Management Modal -->
+  <div id="rosterModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-emerald-700/60 rounded-3xl p-5 sm:p-7 max-w-lg w-full text-slate-200 shadow-2xl flex flex-col max-h-[90vh]">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-users-gear text-amber-400 text-xl"></i>
+          <h2 class="text-xl font-fun text-white">학생 명단 편집</h2>
+        </div>
+        <button id="closeRosterModalBtn" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="my-4 flex-1 overflow-y-auto space-y-4 pr-1">
+        <!-- Prominent Random 10 Action in modal -->
+        <div class="bg-amber-950/40 p-3 rounded-xl border border-amber-600/40 flex items-center justify-between gap-3">
+          <div class="text-xs text-amber-200">
+            <strong>🎲 랜덤 10명 배정</strong><br>
+            ‘구독’, ‘좋아요’, ‘알림 설정’이 포함된 10명을 즉시 무작위 생성합니다.
+          </div>
+          <button id="modalRandomAssignBtn" type="button" class="shrink-0 px-3 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-fun font-bold rounded-lg transition active:scale-95 shadow">
+            랜덤 10명 생성
+          </button>
+        </div>
+
+        <!-- Gemini AI Themed Roster Generator Card -->
+        <div class="bg-gradient-to-r from-purple-950/50 via-indigo-950/40 to-slate-950 p-3.5 rounded-2xl border border-purple-500/40 shadow-lg">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-1.5 text-xs font-bold text-purple-300">
+              <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i>
+              <span>✨ Gemini AI 주제별 맞춤 명단 생성</span>
+            </div>
+            <span class="text-[10px] text-purple-300/70 bg-purple-900/40 px-2 py-0.5 rounded-full border border-purple-700/40">gemini-3-flash</span>
+          </div>
+          <p class="text-[11px] text-slate-300 mb-2 leading-relaxed">
+            원하는 수업 주제를 입력하면 AI가 재미있는 10개 항목을 자동 생성합니다. (구독, 좋아요, 알림 설정 자동 포함)
+          </p>
+          <div class="flex gap-2">
+            <input type="text" id="aiTopicInput" placeholder="예: 조선시대 위인들, 태양계 행성, 사자성어, 전설의 포켓몬" class="flex-1 bg-slate-950 border border-purple-500/40 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400">
+            <button type="button" id="btnGenerateAiRoster" class="px-3.5 py-2 bg-purple-600 hover:bg-purple-500 text-white font-fun text-xs rounded-xl transition active:scale-95 shadow flex items-center gap-1.5 shrink-0">
+              <i class="fa-solid fa-bolt text-amber-300"></i>
+              <span>AI 생성</span>
+            </button>
+          </div>
+          <!-- Quick topic idea tags -->
+          <div class="flex flex-wrap gap-1.5 mt-2">
+            <button type="button" class="ai-quick-topic text-[10px] px-2 py-0.5 bg-purple-950/60 hover:bg-purple-900 border border-purple-700/50 text-purple-200 rounded-md transition" data-topic="한국사 위인">#한국사 위인</button>
+            <button type="button" class="ai-quick-topic text-[10px] px-2 py-0.5 bg-purple-950/60 hover:bg-purple-900 border border-purple-700/50 text-purple-200 rounded-md transition" data-topic="우주와 천체 탐사">#우주 천체</button>
+            <button type="button" class="ai-quick-topic text-[10px] px-2 py-0.5 bg-purple-950/60 hover:bg-purple-900 border border-purple-700/50 text-purple-200 rounded-md transition" data-topic="신비한 바다 동물">#해양 생물</button>
+            <button type="button" class="ai-quick-topic text-[10px] px-2 py-0.5 bg-purple-950/60 hover:bg-purple-900 border border-purple-700/50 text-purple-200 rounded-md transition" data-topic="세계의 불가사의와 랜드마크">#세계 랜드마크</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">
+            학생 명단 (<span id="textareaCount">0</span>명 입력됨)
+          </label>
+          <textarea id="rosterInput" rows="7" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition font-mono leading-relaxed resize-none" placeholder="학생1&#10;학생2&#10;학생3"></textarea>
+        </div>
+
+        <!-- Quick Presets -->
+        <div>
+          <span class="text-xs text-slate-400 block mb-1.5 font-medium">빠른 프리셋:</span>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" class="preset-btn text-xs px-2.5 py-1.5 bg-slate-800 hover:bg-emerald-700 rounded-lg border border-slate-700 transition" data-preset="random10">🎯 랜덤 10명(구독·좋아요·알림설정)</button>
+            <button type="button" class="preset-btn text-xs px-2.5 py-1.5 bg-slate-800 hover:bg-emerald-700 rounded-lg border border-slate-700 transition" data-preset="koreanNames">기본 학급 15명</button>
+            <button type="button" class="preset-btn text-xs px-2.5 py-1.5 bg-slate-800 hover:bg-emerald-700 rounded-lg border border-slate-700 transition" data-preset="numbers1to20">번호 (1번~20번)</button>
+          </div>
+        </div>
+
+        <!-- Excluded Students Management -->
+        <div id="excludedBox" class="hidden bg-slate-950/70 p-3 rounded-xl border border-rose-900/40">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold text-rose-300">이미 당첨되어 제외된 학생 (<span id="excludedCount">0</span>명)</span>
+            <button id="restoreAllExcludedBtn" class="text-xs text-amber-400 hover:underline">모두 복원하기</button>
+          </div>
+          <div id="excludedTags" class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto"></div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="pt-3 border-t border-slate-800 flex items-center justify-between gap-3">
+        <button id="clearAllRosterBtn" class="text-xs text-rose-400 hover:text-rose-300 px-3 py-2 rounded-lg hover:bg-rose-950/30 transition">
+          전체 비우기
+        </button>
+        <div class="flex items-center gap-2">
+          <button id="cancelRosterBtn" class="px-4 py-2 text-sm rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+            취소
+          </button>
+          <button id="saveRosterBtn" class="px-5 py-2 text-sm rounded-xl font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition shadow-lg shadow-amber-500/30">
+            저장 및 적용
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    /* Web Audio API Sound Synthesizer with Fanfare trumpets and click feedback */
+    class SoundFX {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+
+      initCtx() {
         if (!this.ctx) {
           const AudioContext = window.AudioContext || window.webkitAudioContext;
-          this.ctx = new AudioContext();
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
         }
         if (this.ctx && this.ctx.state === 'suspended') {
           this.ctx.resume();
         }
-      },
+      }
 
-      toggle() {
-        this.enabled = !this.enabled;
-        const icon = document.getElementById('soundIcon');
-        icon.textContent = this.enabled ? '🔊' : '🔇';
-        return this.enabled;
-      },
-
-      /* 정답 실로폰 멜로디 */
-      playCorrect(combo = 1) {
+      playClick() {
         if (!this.enabled) return;
-        this.init();
-        const baseFreq = 523.25; // C5
-        const step = Math.min(combo - 1, 8);
-        const freq1 = baseFreq * Math.pow(2, step / 12);
-        const freq2 = freq1 * 1.25; // 장3도 위
-
-        this.beep(freq1, 0.12, 'triangle', 0.18);
-        setTimeout(() => this.beep(freq2, 0.18, 'triangle', 0.2), 70);
-      },
-
-      /* 오답 둔탁한 소리 */
-      playWrong() {
-        if (!this.enabled) return;
-        this.init();
-        this.beep(160, 0.22, 'sawtooth', 0.2);
-        setTimeout(() => this.beep(120, 0.25, 'sawtooth', 0.2), 100);
-      },
-
-      /* 버튼 탭 클릭 사운드 */
-      playTap() {
-        if (!this.enabled) return;
-        this.init();
-        this.beep(420, 0.04, 'sine', 0.1);
-      },
-
-      /* 긴박한 시계 초침 째깍 소리 */
-      playTick() {
-        if (!this.enabled) return;
-        this.init();
-        this.beep(950, 0.03, 'square', 0.06);
-      },
-
-      /* 팡파레 축하음 */
-      playFanfare() {
-        if (!this.enabled) return;
-        this.init();
-        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-        notes.forEach((freq, idx) => {
-          setTimeout(() => {
-            this.beep(freq, 0.25, 'triangle', 0.25);
-          }, idx * 110);
-        });
-      },
-
-      /* 단일 톤 합성 헬퍼 */
-      beep(freq, duration, type = 'sine', volume = 0.2) {
         try {
+          this.initCtx();
+          if (!this.ctx) return;
           const osc = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
-          osc.type = type;
-          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-          
-          gain.gain.setValueAtTime(volume, this.ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(650, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(140, this.ctx.currentTime + 0.04);
+
+          gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.04);
 
           osc.connect(gain);
           gain.connect(this.ctx.destination);
+
           osc.start();
-          osc.stop(this.ctx.currentTime + duration);
+          osc.stop(this.ctx.currentTime + 0.04);
         } catch (e) {
-          // Audio context safe fallback
+          console.warn("Audio play issue", e);
         }
       }
+
+      playFanfare() {
+        if (!this.enabled) return;
+        try {
+          this.initCtx();
+          if (!this.ctx) return;
+          // Triumphant fanfare melody: C4, G4, C5, E5, G5, C6 with harmonized chords
+          const fanfareScore = [
+            { freq: 261.63, time: 0, dur: 0.15 },
+            { freq: 392.00, time: 0.15, dur: 0.15 },
+            { freq: 523.25, time: 0.30, dur: 0.18 },
+            { freq: 659.25, time: 0.48, dur: 0.20 },
+            { freq: 783.99, time: 0.68, dur: 0.22 },
+            { freq: 1046.50, time: 0.90, dur: 0.90 }, // long triumph finish
+            { freq: 523.25, time: 0.90, dur: 0.90 }  // harmony octave
+          ];
+
+          fanfareScore.forEach(note => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(note.freq, this.ctx.currentTime + note.time);
+
+            gain.gain.setValueAtTime(0.001, this.ctx.currentTime + note.time);
+            gain.gain.linearRampToValueAtTime(0.24, this.ctx.currentTime + note.time + 0.04);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + note.time + note.dur);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(this.ctx.currentTime + note.time);
+            osc.stop(this.ctx.currentTime + note.time + note.dur + 0.05);
+          });
+        } catch (e) {
+          console.warn("Fanfare error", e);
+        }
+      }
+    }
+
+    const sound = new SoundFX();
+
+    // Pool of realistic Korean student names to draw from
+    const NAME_POOL = [
+      "김민준", "이서준", "박도윤", "정예준", "최시우", 
+      "강하준", "조주원", "윤지호", "장지후", "임준우", 
+      "한서아", "오하은", "신서윤", "송지유", "권채원",
+      "배수아", "백서연", "유다은", "안지안", "황유준",
+      "서우진", "노은우", "홍서진", "문태양", "손예린"
+    ];
+
+    // Function to generate 10 random participants, GUARANTEEING: "구독", "좋아요", "알림 설정"
+    function generateRandom10() {
+      // 1. Mandatory keywords requested by user
+      const mandatory = ["구독 📺", "좋아요 👍", "알림 설정 🔔"];
+      
+      // 2. Pick 7 distinct random student names
+      const shuffledNames = [...NAME_POOL];
+      for (let i = shuffledNames.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledNames[i], shuffledNames[j]] = [shuffledNames[j], shuffledNames[i]];
+      }
+      const selectedStudents = shuffledNames.slice(0, 7);
+
+      // 3. Combine to form exactly 10 members
+      const combined = [...mandatory, ...selectedStudents];
+
+      // 4. Shuffle the 10 items so mandatory items are placed randomly
+      for (let i = combined.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [combined[i], combined[j]] = [combined[j], combined[i]];
+      }
+
+      return combined;
+    }
+
+    const PRESETS = {
+      random10: generateRandom10(),
+      koreanNames: [
+        "김민준", "이서준", "박도윤", "정예준", "최시우", 
+        "강하준", "조주원", "윤지호", "장지후", "임준우", 
+        "한서아", "오하은", "신서윤", "송지유", "권채원"
+      ],
+      numbers1to20: Array.from({length: 20}, (_, i) => `${i + 1}번`)
     };
 
-    /* 가벼운 캔버스 폭죽(컨페티) 이펙터 */
-    const Confetti = {
-      canvas: document.getElementById('confettiCanvas'),
-      ctx: null,
-      particles: [],
-      animationId: null,
+    // Color Palette designed specifically for bright, joyful roulette slices on green chalkboard
+    const SLICE_COLORS = [
+      '#EF4444', '#F97316', '#F59E0B', '#10B981', 
+      '#06B6D4', '#3B82F6', '#6366F1', '#8B5CF6', 
+      '#EC4899', '#14B8A6', '#84CC16', '#E11D48'
+    ];
 
-      init() {
-        this.ctx = this.canvas.getContext('2d');
-        this.resize();
-        window.addEventListener('resize', () => this.resize());
-      },
+    let state = {
+      candidates: generateRandom10(), // Default starts with 10 random members including 구독, 좋아요, 알림 설정!
+      excluded: [],
+      excludeOnPick: false,
+      currentRotation: 0, // radians
+      isSpinning: false,
+      lastPassedIndex: -1,
+      fanfareFired: false
+    };
 
-      resize() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
-      },
+    // DOM Elements
+    const canvas = document.getElementById('rouletteCanvas');
+    const ctx = canvas.getContext('2d');
+    const spinBtn = document.getElementById('spinBtn');
+    const pointer = document.getElementById('roulettePointer');
+    const candidateBadge = document.getElementById('candidateCountBadge');
+    const excludePickedToggle = document.getElementById('excludePickedToggle');
+    const quickShuffleBtn = document.getElementById('quickShuffleBtn');
+    const quickRandomAssignBtn = document.getElementById('quickRandomAssignBtn');
+    const btnTriggerRandom10 = document.getElementById('btnTriggerRandom10');
+    const modalRandomAssignBtn = document.getElementById('modalRandomAssignBtn');
+    const fanfareBanner = document.getElementById('fanfareBanner');
 
-      fire(x = window.innerWidth / 2, y = window.innerHeight / 2, count = 40) {
-        const colors = ['#f59e0b', '#ec4899', '#3b82f6', '#10b981', '#8b5cf6', '#ef4444'];
-        for (let i = 0; i < count; i++) {
-          const angle = Math.random() * Math.PI * 2;
-          const speed = Math.random() * 8 + 3;
-          this.particles.push({
-            x: x,
-            y: y,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed - 3,
-            size: Math.random() * 6 + 4,
-            color: colors[Math.floor(Math.random() * colors.length)],
-            rotation: Math.random() * 360,
-            rotSpeed: (Math.random() - 0.5) * 12,
-            opacity: 1,
-            gravity: 0.25,
-            drag: 0.96
+    const aiMissionSubject = document.getElementById('aiMissionSubject');
+    const aiMissionText = document.getElementById('aiMissionText');
+    const btnRegenAiMission = document.getElementById('btnRegenAiMission');
+    const aiTopicInput = document.getElementById('aiTopicInput');
+    const btnGenerateAiRoster = document.getElementById('btnGenerateAiRoster');
+    
+    // Modal & Toast elements
+    const winnerModal = document.getElementById('winnerModal');
+    const winnerNameEl = document.getElementById('winnerName');
+    const closeWinnerBtn = document.getElementById('closeWinnerBtn');
+    const spinAgainBtn = document.getElementById('spinAgainBtn');
+    
+    const rosterModal = document.getElementById('rosterModal');
+    const openRosterBtn = document.getElementById('openRosterBtn');
+    const closeRosterModalBtn = document.getElementById('closeRosterModalBtn');
+    const cancelRosterBtn = document.getElementById('cancelRosterBtn');
+    const saveRosterBtn = document.getElementById('saveRosterBtn');
+    const rosterInput = document.getElementById('rosterInput');
+    const textareaCount = document.getElementById('textareaCount');
+    const clearAllRosterBtn = document.getElementById('clearAllRosterBtn');
+    const excludedBox = document.getElementById('excludedBox');
+    const excludedCount = document.getElementById('excludedCount');
+    const excludedTags = document.getElementById('excludedTags');
+    const restoreAllExcludedBtn = document.getElementById('restoreAllExcludedBtn');
+    
+    const soundToggleBtn = document.getElementById('soundToggleBtn');
+    const soundIcon = document.getElementById('soundIcon');
+    const soundText = document.getElementById('soundText');
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toastMsg');
+    const toastIcon = document.getElementById('toastIcon');
+
+    function showToast(message, type = 'info') {
+      toastMsg.textContent = message;
+      if (type === 'error') {
+        toastIcon.className = 'fa-solid fa-circle-exclamation text-rose-400 text-lg';
+      } else if (type === 'warn') {
+        toastIcon.className = 'fa-solid fa-triangle-exclamation text-amber-400 text-lg';
+      } else {
+        toastIcon.className = 'fa-solid fa-circle-check text-emerald-400 text-lg';
+      }
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 2600);
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function applyRandom10Assignment() {
+      if (state.isSpinning) return;
+      const new10 = generateRandom10();
+      state.candidates = new10;
+      state.excluded = [];
+      updateUI();
+      if (!rosterModal.classList.contains('hidden')) {
+        rosterInput.value = state.candidates.join('\n');
+        updateTextareaCount();
+      }
+      showToast("🎲 10명 랜덤 배정 완료! (구독, 좋아요, 알림 설정 포함)", "info");
+    }
+
+    function drawRoulette() {
+      const width = canvas.width;
+      const height = canvas.height;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const radius = width / 2 - 14;
+
+      ctx.clearRect(0, 0, width, height);
+
+      const items = state.candidates;
+      const count = items.length;
+
+      if (count === 0) {
+        // Draw empty message on the wheel
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#1e3a2f';
+        ctx.fill();
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = '#34d399';
+        ctx.stroke();
+
+        ctx.fillStyle = '#fef08a';
+        ctx.font = 'bold 22px "Jua", "Noto Sans KR"';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('명단이 비어 있습니다', centerX, centerY - 15);
+        ctx.font = '15px "Noto Sans KR"';
+        ctx.fillStyle = '#a7f3d0';
+        ctx.fillText('상단 [랜덤 10명 배정]을 눌러보세요!', centerX, centerY + 20);
+        ctx.restore();
+        return;
+      }
+
+      const arc = (Math.PI * 2) / count;
+
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(state.currentRotation);
+
+      // Draw each sector slice
+      for (let i = 0; i < count; i++) {
+        const angle = i * arc;
+        const color = SLICE_COLORS[i % SLICE_COLORS.length];
+
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, radius, angle, angle + arc);
+        ctx.fillStyle = color;
+        ctx.fill();
+
+        // Stroke line between slices
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        // Draw Text inside slice
+        ctx.save();
+        ctx.rotate(angle + arc / 2);
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffffff';
+        
+        // Shadow for maximum readability
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
+
+        // Auto-scale font size
+        let fontSize = count > 24 ? 14 : count > 14 ? 17 : count > 8 ? 20 : 23;
+        const text = items[i];
+        if (text.length > 5 && fontSize > 16) {
+          fontSize = 16;
+        }
+
+        ctx.font = `bold ${fontSize}px "Noto Sans KR", "Jua", sans-serif`;
+
+        // Position text from perimeter inward
+        ctx.fillText(text, radius - 26, 0);
+        ctx.restore();
+      }
+
+      // Draw outer rim embellishment dots (light bulbs effect)
+      const dotCount = Math.max(24, count * 2);
+      for (let d = 0; d < dotCount; d++) {
+        const dotAngle = (d * (Math.PI * 2)) / dotCount;
+        const dotX = Math.cos(dotAngle) * (radius - 4);
+        const dotY = Math.sin(dotAngle) * (radius - 4);
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, 3, 0, Math.PI * 2);
+        ctx.fillStyle = d % 2 === 0 ? '#ffea75' : '#ffffff';
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    function getWinningIndex(rotation) {
+      const count = state.candidates.length;
+      if (count === 0) return -1;
+      const arc = (Math.PI * 2) / count;
+
+      const twoPi = Math.PI * 2;
+      let pointerAngle = ( (3 * Math.PI / 2) - rotation ) % twoPi;
+      if (pointerAngle < 0) pointerAngle += twoPi;
+
+      return Math.floor(pointerAngle / arc) % count;
+    }
+
+    // Spectacular Fanfare Animation Cannon (Left & Right continuous burst)
+    function triggerFanfareExplosion() {
+      // 1. Show Fanfare Banner on top
+      fanfareBanner.classList.remove('hidden');
+      setTimeout(() => {
+        fanfareBanner.classList.add('hidden');
+      }, 3500);
+
+      // 2. Play sound fanfare
+      sound.playFanfare();
+
+      // 3. Multi-stage Canvas Confetti Cannons
+      if (typeof confetti === 'function') {
+        const duration = 2800;
+        const animationEnd = Date.now() + duration;
+        const colors = ['#f59e0b', '#ef4444', '#10b981', '#3b82f6', '#ec4899', '#ffffff'];
+
+        (function frame() {
+          // Launch fireworks from both bottom corners
+          confetti({
+            particleCount: 5,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0, y: 0.75 },
+            colors: colors,
+            zIndex: 9999
           });
-        }
-        if (!this.animationId) {
-          this.loop();
-        }
-      },
+          confetti({
+            particleCount: 5,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1, y: 0.75 },
+            colors: colors,
+            zIndex: 9999
+          });
 
-      loop() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        for (let i = this.particles.length - 1; i >= 0; i--) {
-          const p = this.particles[i];
-          p.x += p.vx;
-          p.y += p.vy;
-          p.vy += p.gravity;
-          p.vx *= p.drag;
-          p.rotation += p.rotSpeed;
-          p.opacity -= 0.015;
+          if (Date.now() < animationEnd) {
+            requestAnimationFrame(frame);
+          }
+        }());
 
-          if (p.opacity <= 0 || p.y > this.canvas.height + 50) {
-            this.particles.splice(i, 1);
+        // Big center burst
+        confetti({
+          particleCount: 150,
+          spread: 100,
+          origin: { y: 0.6 },
+          zIndex: 9999,
+          colors: ['#ffd700', '#ff4500', '#00ffcc', '#ffffff']
+        });
+      }
+    }
+
+    function triggerSpin() {
+      if (state.isSpinning) return;
+      if (state.candidates.length === 0) {
+        showToast("추첨할 학생 명단이 없습니다! [랜덤 10명 배정]을 눌러보세요.", "warn");
+        return;
+      }
+      if (state.candidates.length === 1) {
+        showToast("학생이 1명뿐입니다. 바로 당첨 처리합니다!", "info");
+        triggerFanfareExplosion();
+        announceWinner(state.candidates[0], 0);
+        return;
+      }
+
+      state.isSpinning = true;
+      state.fanfareFired = false;
+      spinBtn.disabled = true;
+      spinBtn.classList.add('opacity-70', 'cursor-not-allowed', 'scale-95');
+      pointer.classList.add('pointer-active');
+
+      // Random target rotation between 5 to 8 full revolutions + random offset
+      const extraRevolutions = 5 + Math.random() * 3.5;
+      const randomOffset = Math.random() * Math.PI * 2;
+      const totalDelta = extraRevolutions * Math.PI * 2 + randomOffset;
+      
+      const startRotation = state.currentRotation;
+      const duration = 5200; // 5.2 seconds suspense
+      const startTime = performance.now();
+
+      function easeOutQuart(x) {
+        return 1 - Math.pow(1 - x, 4);
+      }
+
+      function animateSpin(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easedProgress = easeOutQuart(progress);
+
+        state.currentRotation = startRotation + totalDelta * easedProgress;
+
+        // Sound tick feedback
+        const currentWinIdx = getWinningIndex(state.currentRotation);
+        if (currentWinIdx !== state.lastPassedIndex) {
+          state.lastPassedIndex = currentWinIdx;
+          sound.playClick();
+        }
+
+        // TRIGGER FANFARE just as the wheel is about to stop (at 93% progress) for maximum thrill!
+        if (progress >= 0.93 && !state.fanfareFired) {
+          state.fanfareFired = true;
+          triggerFanfareExplosion();
+        }
+
+        drawRoulette();
+
+        if (progress < 1) {
+          requestAnimationFrame(animateSpin);
+        } else {
+          // Spin complete
+          state.isSpinning = false;
+          spinBtn.disabled = false;
+          spinBtn.classList.remove('opacity-70', 'cursor-not-allowed', 'scale-95');
+          pointer.classList.remove('pointer-active');
+
+          const finalIdx = getWinningIndex(state.currentRotation);
+          const winner = state.candidates[finalIdx];
+          announceWinner(winner, finalIdx);
+        }
+      }
+
+      requestAnimationFrame(animateSpin);
+    }
+
+    function announceWinner(winner, index) {
+      winnerNameEl.textContent = winner;
+      winnerModal.classList.remove('hidden');
+
+      generateAiPresentationMission(winner);
+
+      // If exclude option is checked, remove immediately from candidates list
+      if (state.excludeOnPick && index >= 0) {
+        state.candidates.splice(index, 1);
+        state.excluded.push(winner);
+        updateUI();
+      }
+    }
+
+    // Helper function for exponential backoff retry on Gemini API calls
+    async function fetchWithRetry(url, options, maxRetries = 3) {
+      let delay = 1000;
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          const response = await fetch(url, options);
+          if (response.ok) return response;
+          // If throttled (status 429) or server error, back off
+          if (response.status === 429 || response.status >= 500) {
+            await new Promise(res => setTimeout(res, delay));
+            delay *= 2;
             continue;
           }
-
-          this.ctx.save();
-          this.ctx.translate(p.x, p.y);
-          this.ctx.rotate((p.rotation * Math.PI) / 180);
-          this.ctx.globalAlpha = Math.max(0, p.opacity);
-          this.ctx.fillStyle = p.color;
-          this.ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.7);
-          this.ctx.restore();
-        }
-
-        if (this.particles.length > 0) {
-          this.animationId = requestAnimationFrame(() => this.loop());
-        } else {
-          this.animationId = null;
+          return response;
+        } catch (err) {
+          if (i === maxRetries - 1) throw err;
+          await new Promise(res => setTimeout(res, delay));
+          delay *= 2;
         }
       }
+      throw new Error("API request failed after retries.");
+    }
+
+    // Call Gemini 3 Flash to generate a lively classroom mission for the winner
+    async function generateAiPresentationMission(studentName) {
+      const subject = aiMissionSubject.value || "아이스브레이킹/창의력";
+      aiMissionText.innerHTML = `<span class="inline-flex items-center gap-1.5 text-amber-300"><i class="fa-solid fa-spinner fa-spin"></i> '${studentName}' 학생을 위한 맞춤 AI 미션 생성 중...</span>`;
+      btnRegenAiMission.disabled = true;
+
+      const apiKey = "";
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+      const systemPrompt = "너는 친절하고 유머러스한 초·중·고등학교 선생님 보조 AI야. 수업 시간 발표자로 당첨된 학생이 부담 없이 즐겁고 당당하게 발표할 수 있도록 1문장(최대 45자 이내)의 명쾌하고 재미있는 발표 미션이나 칭찬 질문을 만들어 줘. 존댓말로 부드럽게 답변해.";
+      const userPrompt = `발표자 이름: ${studentName}\n수업 과목/분야: ${subject}\n조건: 유튜브 '구독·좋아요·알림 설정'처럼 재미있고 힘이 나는 센스 있는 미션 1문장만 출력해줘. 다른 군더더기 인사말은 붙이지 마.`;
+
+      const payload = {
+        contents: [{ parts: [{ text: userPrompt }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] }
+      };
+
+      try {
+        const response = await fetchWithRetry(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        const missionText = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+        if (missionText) {
+          aiMissionText.textContent = `🎯 ${missionText}`;
+        } else {
+          aiMissionText.textContent = `🎯 ${studentName} 학생, 오늘의 질문에 자신 있게 한마디 해 볼까요? 👏`;
+        }
+      } catch (err) {
+        aiMissionText.textContent = `🎯 ${studentName} 학생! 큰 목소리로 멋지게 발표해 주세요! 👏`;
+      } finally {
+        btnRegenAiMission.disabled = false;
+      }
+    }
+
+    // Call Gemini 3 Flash with JSON Schema to generate a themed 10-item roster
+    async function generateAiThemedRoster(topic) {
+      if (!topic || !topic.trim()) {
+        showToast("원하는 주제 키워드를 입력해 주세요!", "warn");
+        return;
+      }
+
+      btnGenerateAiRoster.disabled = true;
+      btnGenerateAiRoster.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 생성 중...`;
+      showToast(`'${topic}' 주제로 AI 명단을 생성하고 있습니다...`, "info");
+
+      const apiKey = "";
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+      const userPrompt = `수업용 원판 룰렛에 들어갈 10개의 슬라이스 항목을 작성해줘.
+주제는 '${topic}'야.
+주의사항:
+1. 10개 중 정확히 3개는 반드시 '구독 📺', '좋아요 👍', '알림 설정 🔔' 이어야 해.
+2. 나머지 7개는 '${topic}'와 관련된 대표적이고 흥미로운 고유명사나 항목(각 2~6글자)으로 채워줘.
+3. 총 10개의 문자열 배열 형태로 반환해줘.`;
+
+      const payload = {
+        contents: [{ parts: [{ text: userPrompt }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "ARRAY",
+            items: { type: "STRING" }
+          }
+        }
+      };
+
+      try {
+        const response = await fetchWithRetry(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        const jsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (jsonText) {
+          let items = JSON.parse(jsonText);
+          if (Array.isArray(items) && items.length > 0) {
+            // Verify mandatory keywords exist, if missing enforce them
+            const hasSub = items.some(i => i.includes('구독'));
+            const hasLike = items.some(i => i.includes('좋아요'));
+            const hasBell = items.some(i => i.includes('알림'));
+            if (!hasSub) items.push('구독 📺');
+            if (!hasLike) items.push('좋아요 👍');
+            if (!hasBell) items.push('알림 설정 🔔');
+
+            // Limit to 10 and shuffle
+            shuffleArray(items);
+            items = items.slice(0, 10);
+
+            rosterInput.value = items.join('\n');
+            updateTextareaCount();
+            showToast(`✨ '${topic}' AI 맞춤 10명 명단이 완성되었습니다!`, "info");
+          }
+        } else {
+          showToast("AI 응답을 처리하지 못했습니다. 다시 시도해 주세요.", "error");
+        }
+      } catch (err) {
+        showToast("AI 명단 생성 중 네트워크 오류가 발생했습니다.", "error");
+      } finally {
+        btnGenerateAiRoster.disabled = false;
+        btnGenerateAiRoster.innerHTML = `<i class="fa-solid fa-bolt text-amber-300"></i><span>AI 생성</span>`;
+      }
+    }
+
+    function updateUI() {
+      candidateBadge.textContent = state.candidates.length;
+      drawRoulette();
+      renderExcludedList();
+    }
+
+    function openRosterModal() {
+      rosterInput.value = state.candidates.join('\n');
+      updateTextareaCount();
+      renderExcludedList();
+      rosterModal.classList.remove('hidden');
+    }
+
+    function closeRosterModal() {
+      rosterModal.classList.add('hidden');
+    }
+
+    function updateTextareaCount() {
+      const items = parseTextarea(rosterInput.value);
+      textareaCount.textContent = items.length;
+    }
+
+    function parseTextarea(val) {
+      return val
+        .split(/[\n,]+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+    }
+
+    function renderExcludedList() {
+      if (state.excluded.length > 0) {
+        excludedBox.classList.remove('hidden');
+        excludedCount.textContent = state.excluded.length;
+        excludedTags.innerHTML = '';
+        state.excluded.forEach((name, idx) => {
+          const tag = document.createElement('span');
+          tag.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-800 text-rose-300 text-xs rounded-lg border border-rose-900/60';
+          tag.innerHTML = `
+            <span>${name}</span>
+            <button class="text-slate-400 hover:text-white" title="명단으로 복귀" onclick="restoreExcluded(${idx})">
+              <i class="fa-solid fa-rotate-left text-[10px]"></i>
+            </button>
+          `;
+          excludedTags.appendChild(tag);
+        });
+      } else {
+        excludedBox.classList.add('hidden');
+      }
+    }
+
+    window.restoreExcluded = function(idx) {
+      const item = state.excluded.splice(idx, 1)[0];
+      state.candidates.push(item);
+      showToast(`'${item}' 항목을 다시 명단에 추가했습니다.`, "info");
+      updateUI();
+      rosterInput.value = state.candidates.join('\n');
+      updateTextareaCount();
     };
 
-    /* 게임 핵심 로직 컨트롤러 */
-    const Game = {
-      mode: 'stage', // 'stage', 'timeAttack', 'survival'
-      stageNum: 2, // 2 ~ 9 or 'all'
-      inputMode: 'choice', // 'choice' or 'keypad'
-      
-      score: 0,
-      combo: 0,
-      maxCombo: 0,
-      currentQuestionIndex: 0,
-      totalQuestions: 10,
-      correctCount: 0,
-      wrongCount: 0,
-      lives: 3,
-      maxLives: 3,
-      
-      // 시간 제한 및 게이지 컨트롤
-      perQuestionDuration: 6, // 문제당 제한시간(초)
-      perQuestionTimeLeft: 6,
-      questionTimerInterval: null,
-      globalTimeLeft: 60,
-      globalTimerInterval: null,
-      isInputLocked: false, // 채점 및 정답 공개 딜레이 중 중복 클릭 방지
-      
-      currentA: 2,
-      currentB: 1,
-      currentAnswer: 2,
-      currentInputString: '',
-      choiceOptions: [],
-
-      // 로컬 스토리지 데이터
-      userData: {
-        stageStars: {}, // { "2": 3, "3": 2, ... }
-        bestScoreTimeAttack: 0,
-        bestCombo: 0
-      },
-
-      init() {
-        Confetti.init();
-        this.loadStorage();
-        this.renderStageGrid();
-        this.renderChartTabs();
-        this.updateLobbyStats();
-        this.bindEvents();
-      },
-
-      bindEvents() {
-        // 사운드 토글
-        document.getElementById('soundToggleBtn').addEventListener('click', () => {
-          SoundEngine.toggle();
-        });
-
-        // 홈 버튼
-        document.getElementById('homeBtn').addEventListener('click', () => {
-          this.endGameTimer();
-          this.showScreen('lobbyScreen');
-        });
-
-        // 물리 키보드 리스너 (0-9, Backspace, Enter 지원)
-        window.addEventListener('keydown', (e) => {
-          // 게임 화면일 때만 반응
-          const playScreen = document.getElementById('gamePlayScreen');
-          if (playScreen.classList.contains('hidden')) return;
-
-          if (e.key >= '0' && e.key <= '9') {
-            if (this.inputMode === 'choice') {
-              // 1~4 키로 보기 선택 편의 기능
-              const num = parseInt(e.key);
-              if (num >= 1 && num <= 4) {
-                this.submitChoice(num - 1);
-              }
-            } else {
-              this.pressKey(parseInt(e.key));
-            }
-          } else if (e.key === 'Backspace') {
-            this.pressKey('clear');
-          } else if (e.key === 'Enter') {
-            this.pressKey('enter');
-          }
-        });
-      },
-
-      loadStorage() {
-        try {
-          const raw = localStorage.getItem('GUGUDAN_ADVENTURE_SAVE');
-          if (raw) {
-            this.userData = Object.assign(this.userData, JSON.parse(raw));
-          }
-        } catch (e) {
-          console.warn('Storage read error:', e);
-        }
-      },
-
-      saveStorage() {
-        try {
-          localStorage.setItem('GUGUDAN_ADVENTURE_SAVE', JSON.stringify(this.userData));
-        } catch (e) {
-          console.warn('Storage save error:', e);
-        }
-      },
-
-      updateLobbyStats() {
-        document.getElementById('bestComboText').textContent = `${this.userData.bestCombo || 0} COMBO`;
-        document.getElementById('bestScoreText').textContent = `${(this.userData.bestScoreTimeAttack || 0).toLocaleString()} 점`;
-        
-        let clearedCount = 0;
-        for (let i = 2; i <= 9; i++) {
-          if (this.userData.stageStars && this.userData.stageStars[i] > 0) {
-            clearedCount++;
-          }
-        }
-        document.getElementById('clearedStagesText').textContent = `${clearedCount} / 8 단`;
-      },
-
-      showScreen(screenId) {
-        const screens = ['lobbyScreen', 'stageSelectScreen', 'gamePlayScreen', 'chartScreen'];
-        screens.forEach(id => {
-          const el = document.getElementById(id);
-          if (id === screenId) {
-            el.classList.remove('hidden');
-            el.classList.add('flex');
-          } else {
-            el.classList.add('hidden');
-            el.classList.remove('flex');
-          }
-        });
-
-        const homeBtn = document.getElementById('homeBtn');
-        if (screenId === 'lobbyScreen') {
-          homeBtn.classList.add('hidden');
-          this.updateLobbyStats();
-        } else {
-          homeBtn.classList.remove('hidden');
-        }
-      },
-
-      renderStageGrid() {
-        const grid = document.getElementById('stageGrid');
-        grid.innerHTML = '';
-
-        for (let dan = 2; dan <= 9; dan++) {
-          const stars = (this.userData.stageStars && this.userData.stageStars[dan]) || 0;
-          let starHtml = '☆☆☆';
-          if (stars === 1) starHtml = '★☆☆';
-          if (stars === 2) starHtml = '★★☆';
-          if (stars === 3) starHtml = '★★★';
-
-          const btn = document.createElement('button');
-          btn.className = 'btn-3d flex flex-col items-center justify-center p-3 rounded-2xl bg-white hover:bg-amber-50 border-2 border-amber-300 shadow-sm transition';
-          btn.onclick = () => this.startStage(dan);
-          btn.innerHTML = `
-            <span class="text-2xl font-game text-amber-600">${dan}단</span>
-            <span class="text-xs text-amber-500 font-bold mt-1 tracking-tight">${starHtml}</span>
-          `;
-          grid.appendChild(btn);
-        }
-      },
-
-      openStageSelect() {
-        SoundEngine.playTap();
-        this.renderStageGrid();
-        this.showScreen('stageSelectScreen');
-      },
-
-      startStage(dan) {
-        SoundEngine.playTap();
-        this.mode = 'stage';
-        this.stageNum = dan;
-        this.totalQuestions = 10;
-        this.lives = 3;
-        this.perQuestionDuration = 6; // 문제당 6초의 긴박함
-        this.initGameSession();
-      },
-
-      startMode(mode) {
-        SoundEngine.playTap();
-        this.mode = mode;
-        if (mode === 'timeAttack') {
-          this.globalTimeLeft = 60;
-          this.totalQuestions = 30; // 60초 내 최대 30문제 횟수 제한
-          this.lives = 999; // 타임어택은 시간 내 무제한 기회
-          this.perQuestionDuration = 5;
-        } else if (mode === 'survival') {
-          this.lives = 3;
-          this.totalQuestions = 50; // 서바이벌 한계 돌파 50문제
-          this.perQuestionDuration = 4; // 4초 초긴박 서든데스
-        }
-        this.initGameSession();
-      },
-
-      retryCurrentMode() {
-        this.closeResultModal();
-        if (this.mode === 'stage') {
-          this.startStage(this.stageNum);
-        } else {
-          this.startMode(this.mode);
-        }
-      },
-
-      initGameSession() {
-        this.stopAllTimers();
-        this.score = 0;
-        this.combo = 0;
-        this.maxCombo = 0;
-        this.currentQuestionIndex = 0;
-        this.correctCount = 0;
-        this.wrongCount = 0;
-        this.currentInputString = '';
-        this.isInputLocked = false;
-
-        const badge = document.getElementById('gameModeBadge');
-        const livesBox = document.getElementById('livesContainer');
-        const questionLimitBadge = document.getElementById('questionLimitBadge');
-        const timerLabel = document.getElementById('timerBarLabel');
-
-        // 모드별 상태창 셋업
-        if (this.mode === 'stage') {
-          const danName = this.stageNum === 'all' ? '보스전 (전체)' : `${this.stageNum}단`;
-          badge.textContent = `단별탐험: ${danName}`;
-          livesBox.classList.remove('hidden');
-          questionLimitBadge.classList.remove('hidden');
-          timerLabel.textContent = '문제당 제한 시간';
-        } else if (this.mode === 'timeAttack') {
-          badge.textContent = '스피드 어택';
-          livesBox.classList.add('hidden');
-          questionLimitBadge.classList.remove('hidden');
-          timerLabel.textContent = '전체 남은 시간 (60초)';
-          this.startGlobalTimer();
-        } else if (this.mode === 'survival') {
-          badge.textContent = '익스트림 서바이벌';
-          livesBox.classList.remove('hidden');
-          questionLimitBadge.classList.remove('hidden');
-          timerLabel.textContent = '초고속 생존 타이머';
-        }
-
-        this.updateLivesUI();
-        this.updateScoreUI();
-        this.updateComboUI();
-        this.setInputMode(this.inputMode);
-        this.showScreen('gamePlayScreen');
-        this.nextQuestion();
-      },
-
-      startGlobalTimer() {
-        if (this.globalTimerInterval) clearInterval(this.globalTimerInterval);
-        const totalDuration = 60;
-        this.globalTimerInterval = setInterval(() => {
-          this.globalTimeLeft--;
-          const timerLabel = document.getElementById('timerTextLarge');
-          if (timerLabel) {
-            timerLabel.textContent = `${this.globalTimeLeft}초`;
-          }
-
-          // 타임어택 모드에서는 메인 막대가 전체 60초를 실시간 반영
-          if (this.mode === 'timeAttack') {
-            const ratio = Math.max(0, (this.globalTimeLeft / totalDuration) * 100);
-            this.updateQuestionTimeBar(ratio);
-          }
-
-          if (this.globalTimeLeft <= 5) {
-            SoundEngine.playTick();
-          }
-          if (this.globalTimeLeft <= 0) {
-            this.stopAllTimers();
-            this.finishGame();
-          }
-        }, 1000);
-      },
-
-      /* 각 문제마다 주어지는 제한 시간 카운트다운 게이지 */
-      startQuestionTimer() {
-        if (this.questionTimerInterval) clearInterval(this.questionTimerInterval);
-        this.perQuestionTimeLeft = this.perQuestionDuration;
-        this.updateQuestionTimeBar(100);
-
-        const card = document.getElementById('questionCard');
-        card.classList.remove('timer-danger');
-
-        const stepMs = 50; // 더욱 부드러운 50ms 인터벌
-        const totalSteps = (this.perQuestionDuration * 1000) / stepMs;
-        let currentStep = 0;
-
-        const timeTextLarge = document.getElementById('timerTextLarge');
-        if (this.mode !== 'timeAttack') {
-          timeTextLarge.textContent = `${this.perQuestionDuration.toFixed(1)}초`;
-        }
-
-        this.questionTimerInterval = setInterval(() => {
-          if (this.isInputLocked) return;
-
-          currentStep++;
-          const remainingRatio = Math.max(0, 100 - (currentStep / totalSteps) * 100);
-          const timeLeftSec = Math.max(0, this.perQuestionDuration - (currentStep * stepMs) / 1000);
-          
-          if (this.mode !== 'timeAttack') {
-            this.updateQuestionTimeBar(remainingRatio);
-            timeTextLarge.textContent = `${timeLeftSec.toFixed(1)}초`;
-          }
-
-          if (timeLeftSec <= 2.0 && timeLeftSec > 0 && currentStep % 10 === 0) {
-            SoundEngine.playTick();
-            card.classList.add('timer-danger');
-          }
-
-          if (currentStep >= totalSteps) {
-            clearInterval(this.questionTimerInterval);
-            this.handleTimeout();
-          }
-        }, stepMs);
-      },
-
-      updateQuestionTimeBar(percent) {
-        const bar = document.getElementById('questionTimeBar');
-        if (!bar) return;
-        bar.style.width = `${percent}%`;
-        if (percent < 25) {
-          bar.className = 'h-full bg-rose-500 rounded-full transition-all duration-75';
-        } else if (percent < 55) {
-          bar.className = 'h-full bg-amber-400 rounded-full transition-all duration-75';
-        } else {
-          bar.className = 'h-full bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500 rounded-full transition-all duration-75';
-        }
-      },
-
-      stopAllTimers() {
-        if (this.questionTimerInterval) {
-          clearInterval(this.questionTimerInterval);
-          this.questionTimerInterval = null;
-        }
-        if (this.globalTimerInterval) {
-          clearInterval(this.globalTimerInterval);
-          this.globalTimerInterval = null;
-        }
-        const card = document.getElementById('questionCard');
-        if (card) card.classList.remove('timer-danger');
-      },
-
-      /* 시간 초과 시 오답 처리 및 정답 알려주기 */
-      handleTimeout() {
-        if (this.isInputLocked) return;
-        this.checkAnswer(null, null, true);
-      },
-
-      updateLivesUI() {
-        const box = document.getElementById('livesContainer');
-        if (this.mode === 'timeAttack') return;
-        let html = '';
-        for (let i = 0; i < 3; i++) {
-          html += i < this.lives ? '<span>❤️</span>' : '<span class="opacity-30">🤍</span>';
-        }
-        box.innerHTML = html;
-      },
-
-      nextQuestion() {
-        // 남은 횟수 체크
-        if (this.currentQuestionIndex >= this.totalQuestions) {
-          this.finishGame();
-          return;
-        }
-
-        this.isInputLocked = false;
-        this.currentQuestionIndex++;
-        this.currentInputString = '';
-        this.updateAnswerDisplay();
-
-        // 정답 배너 숨기기
-        const banner = document.getElementById('answerRevealBanner');
-        banner.classList.add('hidden');
-
-        // 남은 문제 수 UI 갱신
-        const remaining = Math.max(0, this.totalQuestions - this.currentQuestionIndex + 1);
-        document.getElementById('remainingQuestionsText').textContent = remaining;
-
-        // 구구단 피연산자 결정
-        if (this.mode === 'stage') {
-          if (this.stageNum === 'all') {
-            this.currentA = Math.floor(Math.random() * 8) + 2; // 2 ~ 9
-          } else {
-            this.currentA = parseInt(this.stageNum);
-          }
-          this.currentB = Math.floor(Math.random() * 9) + 1; // 1 ~ 9
-          document.getElementById('questionSubtext').innerHTML = `<span>문제 ${this.currentQuestionIndex} / ${this.totalQuestions}</span>`;
-        } else {
-          this.currentA = Math.floor(Math.random() * 8) + 2;
-          this.currentB = Math.floor(Math.random() * 9) + 1;
-          document.getElementById('questionSubtext').innerHTML = `<span>도전: ${this.currentQuestionIndex}번째 / ${this.totalQuestions}문항</span>`;
-        }
-
-        this.currentAnswer = this.currentA * this.currentB;
-        document.getElementById('numA').textContent = this.currentA;
-        document.getElementById('numB').textContent = this.currentB;
-
-        // 4지선다 옵션 생성
-        this.generateChoices();
-
-        // 매 문제 카운트다운 타이머 시작
-        this.startQuestionTimer();
-      },
-
-      /* 4지선다 오답 보기 알고리즘 */
-      generateChoices() {
-        const correct = this.currentAnswer;
-        const options = new Set([correct]);
-
-        while (options.size < 4) {
-          let delta = (Math.floor(Math.random() * 5) - 2) * this.currentA;
-          if (delta === 0) delta = (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 4) + 1);
-          let fake = correct + delta;
-          if (fake <= 0 || fake > 81 || fake === correct) {
-            fake = (Math.floor(Math.random() * 8) + 2) * (Math.floor(Math.random() * 9) + 1);
-          }
-          options.add(fake);
-        }
-
-        this.choiceOptions = Array.from(options).sort(() => Math.random() - 0.5);
-
-        const buttons = document.querySelectorAll('.choice-btn');
-        buttons.forEach((btn, idx) => {
-          btn.textContent = this.choiceOptions[idx];
-          btn.disabled = false;
-          btn.className = 'choice-btn btn-3d bg-white hover:bg-amber-50 text-slate-800 font-game text-2xl py-4 rounded-2xl border-2 border-amber-200';
-        });
-      },
-
-      setInputMode(mode) {
-        this.inputMode = mode;
-        const choiceContainer = document.getElementById('choiceContainer');
-        const keypadContainer = document.getElementById('keypadContainer');
-        const btnChoice = document.getElementById('inputModeChoiceBtn');
-        const btnKeypad = document.getElementById('inputModeKeypadBtn');
-
-        if (mode === 'choice') {
-          choiceContainer.classList.remove('hidden');
-          choiceContainer.classList.add('grid');
-          keypadContainer.classList.add('hidden');
-          keypadContainer.classList.remove('grid');
-
-          btnChoice.className = 'px-2.5 py-1 rounded-lg bg-white shadow-xs text-slate-800 transition';
-          btnKeypad.className = 'px-2.5 py-1 rounded-lg text-slate-500 transition';
-        } else {
-          choiceContainer.classList.add('hidden');
-          choiceContainer.classList.remove('grid');
-          keypadContainer.classList.remove('hidden');
-          keypadContainer.classList.add('grid');
-
-          btnChoice.className = 'px-2.5 py-1 rounded-lg text-slate-500 transition';
-          btnKeypad.className = 'px-2.5 py-1 rounded-lg bg-white shadow-xs text-slate-800 transition';
-        }
-      },
-
-      pressKey(val) {
-        if (this.isInputLocked) return;
-        SoundEngine.playTap();
-        if (val === 'clear') {
-          this.currentInputString = '';
-        } else if (val === 'enter') {
-          if (this.currentInputString.length > 0) {
-            this.checkAnswer(parseInt(this.currentInputString, 10));
-          }
-          return;
-        } else {
-          if (this.currentInputString.length < 2) {
-            this.currentInputString += val.toString();
-          }
-        }
-        this.updateAnswerDisplay();
-
-        const currentVal = parseInt(this.currentInputString, 10);
-        if (this.currentInputString.length === 2 && currentVal === this.currentAnswer) {
-          setTimeout(() => this.checkAnswer(currentVal), 100);
-        }
-      },
-
-      submitChoice(idx) {
-        if (this.isInputLocked) return;
-        const selected = this.choiceOptions[idx];
-        this.checkAnswer(selected, idx);
-      },
-
-      updateAnswerDisplay() {
-        const display = document.getElementById('userAnswerDisplay');
-        display.textContent = this.currentInputString.length > 0 ? this.currentInputString : '?';
-      },
-
-      /* 정답 판별 및 오답 시 정답 노출 */
-      checkAnswer(userAns, choiceIndex = null, isTimeout = false) {
-        if (this.isInputLocked) return;
-        this.isInputLocked = true; // 채점 중 추가 조작 차단
-
-        // 타이머 멈춤
-        if (this.questionTimerInterval) {
-          clearInterval(this.questionTimerInterval);
-        }
-
-        const isCorrect = !isTimeout && userAns === this.currentAnswer;
-        const card = document.getElementById('questionCard');
-        card.classList.remove('timer-danger');
-
-        if (isCorrect) {
-          // [정답]
-          this.correctCount++;
-          this.combo++;
-          if (this.combo > this.maxCombo) {
-            this.maxCombo = this.combo;
-          }
-
-          // 속도 보너스 (남은 시간 비례 추가 점수)
-          const speedBonus = Math.round(this.perQuestionTimeLeft * 15);
-          const comboBonus = Math.min(this.combo * 20, 200);
-          this.score += 100 + speedBonus + comboBonus;
-
-          SoundEngine.playCorrect(this.combo);
-          this.showFeedback('🎉 정답!', 'text-emerald-500');
-
-          if (choiceIndex !== null) {
-            const buttons = document.querySelectorAll('.choice-btn');
-            if (buttons[choiceIndex]) {
-              buttons[choiceIndex].classList.add('!bg-emerald-500', '!text-white', '!border-emerald-600');
-            }
-          }
-
-          if (this.combo % 5 === 0) {
-            Confetti.fire(window.innerWidth / 2, window.innerHeight * 0.4, 30);
-          }
-
-          this.updateScoreUI();
-          this.updateComboUI();
-
-          // 0.45초 후 쾌속 다음 문제 진행
-          setTimeout(() => {
-            if (this.currentQuestionIndex >= this.totalQuestions) {
-              this.finishGame();
-            } else {
-              this.nextQuestion();
-            }
-          }, 450);
-
-        } else {
-          // [오답 또는 시간 초과]: 정답 친절히 알려주기
-          this.wrongCount++;
-          this.combo = 0;
-          SoundEngine.playWrong();
-          this.animateWrong();
-
-          const feedbackMsg = isTimeout ? '⏰ 시간 초과!' : '❌ 아쉬워요!';
-          this.showFeedback(feedbackMsg, 'text-rose-500');
-
-          // 1. 배너를 통해 정답 공개
-          const banner = document.getElementById('answerRevealBanner');
-          const revealedNumber = document.getElementById('revealedCorrectNumber');
-          revealedNumber.textContent = this.currentAnswer;
-          banner.classList.remove('hidden');
-
-          // 2. 4지선다 버튼 중 실제 정답 버튼 초록색 표시 & 잘못 고른 버튼 붉은색 표시
-          const buttons = document.querySelectorAll('.choice-btn');
-          buttons.forEach((btn, idx) => {
-            if (this.choiceOptions[idx] === this.currentAnswer) {
-              btn.classList.add('!bg-emerald-500', '!text-white', '!border-emerald-600');
-            } else if (idx === choiceIndex) {
-              btn.classList.add('!bg-rose-500', '!text-white', '!border-rose-700');
-            }
-          });
-
-          // 목숨(기회) 차감 (스테이지, 서바이벌)
-          if (this.mode === 'stage' || this.mode === 'survival') {
-            this.lives--;
-            this.updateLivesUI();
-          }
-
-          this.updateScoreUI();
-          this.updateComboUI();
-
-          // 정답을 충분히 보고 배울 수 있도록 1.4초 후 다음 문제 또는 종료
-          setTimeout(() => {
-            if (this.lives <= 0) {
-              this.finishGame(true); // 하트 소진으로 인한 게임 오버
-            } else if (this.currentQuestionIndex >= this.totalQuestions) {
-              this.finishGame();
-            } else {
-              this.nextQuestion();
-            }
-          }, 1400);
-        }
-      },
-
-      animateWrong() {
-        const card = document.getElementById('questionCard');
-        card.classList.add('animate-shake', 'border-rose-400');
-        setTimeout(() => {
-          card.classList.remove('animate-shake', 'border-rose-400');
-        }, 400);
-      },
-
-      showFeedback(text, colorClass) {
-        const badge = document.getElementById('feedbackBadge');
-        badge.textContent = text;
-        badge.className = `absolute top-2 right-3 text-lg font-game opacity-100 transform translate-y-0 transition duration-150 ${colorClass}`;
-        setTimeout(() => {
-          badge.classList.remove('opacity-100');
-          badge.classList.add('opacity-0', 'translate-y-1');
-        }, 800);
-      },
-
-      updateScoreUI() {
-        document.getElementById('scoreText').textContent = this.score.toLocaleString();
-      },
-
-      updateComboUI() {
-        const indicator = document.getElementById('comboIndicator');
-        const countSpan = document.getElementById('comboCount');
-        const feverBar = document.getElementById('feverProgress');
-
-        countSpan.textContent = this.combo;
-
-        if (this.combo >= 2) {
-          indicator.classList.remove('opacity-0', 'scale-90');
-          indicator.classList.add('opacity-100', 'scale-100');
-          feverBar.style.width = `${Math.min(this.combo * 10, 100)}%`;
-        } else {
-          indicator.classList.add('opacity-0', 'scale-90');
-          indicator.classList.remove('opacity-100', 'scale-100');
-          feverBar.style.width = '0%';
-        }
-      },
-
-      finishGame(isGameOverByLives = false) {
-        this.stopAllTimers();
-        this.isInputLocked = true;
-
-        if (isGameOverByLives) {
-          SoundEngine.playWrong();
-        } else {
-          SoundEngine.playFanfare();
-          Confetti.fire(window.innerWidth / 2, window.innerHeight * 0.45, 60);
-        }
-
-        const total = this.correctCount + this.wrongCount;
-        const accuracy = total > 0 ? Math.round((this.correctCount / total) * 100) : 0;
-
-        document.getElementById('modalScore').textContent = `${this.score.toLocaleString()}점`;
-        document.getElementById('modalCorrect').textContent = `${this.correctCount} / ${total} 개`;
-        document.getElementById('modalMaxCombo').textContent = `${this.maxCombo} COMBO`;
-        document.getElementById('modalAccuracy').textContent = `${accuracy}%`;
-
-        // 최고 기록 갱신
-        if (this.maxCombo > (this.userData.bestCombo || 0)) {
-          this.userData.bestCombo = this.maxCombo;
-        }
-        if (this.mode === 'timeAttack' && this.score > (this.userData.bestScoreTimeAttack || 0)) {
-          this.userData.bestScoreTimeAttack = this.score;
-        }
-
-        const starsRow = document.getElementById('starsRow');
-        const title = document.getElementById('resultTitle');
-        const subtitle = document.getElementById('resultSubtitle');
-        const trophy = document.getElementById('resultTrophy');
-
-        if (isGameOverByLives) {
-          starsRow.classList.add('hidden');
-          title.textContent = '아쉽게 하트가 모두 소진되었어요!';
-          subtitle.textContent = '오답 노트를 기억하고 다시 한번 도전해 보세요!';
-          trophy.textContent = '💔';
-        } else if (this.mode === 'stage') {
-          starsRow.classList.remove('hidden');
-          let starEarned = 1;
-          if (this.correctCount >= 10) starEarned = 3;
-          else if (this.correctCount >= 8) starEarned = 2;
-
-          document.getElementById('star1').textContent = starEarned >= 1 ? '⭐' : '☆';
-          document.getElementById('star2').textContent = starEarned >= 2 ? '⭐' : '☆';
-          document.getElementById('star3').textContent = starEarned >= 3 ? '⭐' : '☆';
-
-          if (this.stageNum !== 'all') {
-            const prev = (this.userData.stageStars && this.userData.stageStars[this.stageNum]) || 0;
-            if (starEarned > prev) {
-              if (!this.userData.stageStars) this.userData.stageStars = {};
-              this.userData.stageStars[this.stageNum] = starEarned;
-            }
-          }
-
-          title.textContent = starEarned === 3 ? '퍼펙트 마스터 클리어! 👑' : '스테이지 완주!';
-          subtitle.textContent = '제한 시간 안에 10문제를 훌륭하게 완주했습니다!';
-          trophy.textContent = starEarned === 3 ? '👑' : '⭐';
-        } else {
-          starsRow.classList.add('hidden');
-          title.textContent = this.mode === 'timeAttack' ? '타임어택 완료!' : '서바이벌 대기록 달성!';
-          subtitle.textContent = '눈부신 집중력으로 최고 기록을 돌파했습니다!';
-          trophy.textContent = this.score > 2000 ? '🏆' : '👏';
-        }
-
-        this.saveStorage();
-        this.openResultModal();
-      },
-
-      openResultModal() {
-        const modal = document.getElementById('resultModal');
-        const card = document.getElementById('modalCard');
-        modal.classList.remove('hidden');
-        setTimeout(() => {
-          card.classList.remove('scale-95');
-          card.classList.add('scale-100');
-        }, 50);
-      },
-
-      closeResultModal() {
-        const modal = document.getElementById('resultModal');
-        const card = document.getElementById('modalCard');
-        card.classList.remove('scale-100');
-        card.classList.add('scale-95');
-        setTimeout(() => {
-          modal.classList.add('hidden');
-        }, 150);
-      },
-
-      openChart() {
-        SoundEngine.playTap();
-        this.selectChartDan(2);
-        this.showScreen('chartScreen');
-      },
-
-      renderChartTabs() {
-        const tabs = document.getElementById('chartTabs');
-        tabs.innerHTML = '';
-        for (let dan = 2; dan <= 9; dan++) {
-          const btn = document.createElement('button');
-          btn.id = `chartTabBtn_${dan}`;
-          btn.className = `px-3.5 py-1.5 rounded-xl font-game text-sm shrink-0 border transition ${dan === 2 ? 'bg-indigo-600 text-white border-indigo-700' : 'bg-white text-slate-600 border-slate-200'}`;
-          btn.textContent = `${dan}단`;
-          btn.onclick = () => this.selectChartDan(dan);
-          tabs.appendChild(btn);
-        }
-      },
-
-      selectChartDan(dan) {
-        SoundEngine.playTap();
-        for (let d = 2; d <= 9; d++) {
-          const btn = document.getElementById(`chartTabBtn_${d}`);
-          if (btn) {
-            btn.className = `px-3.5 py-1.5 rounded-xl font-game text-sm shrink-0 border transition ${d === dan ? 'bg-indigo-600 text-white border-indigo-700' : 'bg-white text-slate-600 border-slate-200'}`;
-          }
-        }
-
-        const content = document.getElementById('chartContent');
-        content.innerHTML = '';
-
-        for (let i = 1; i <= 9; i++) {
-          const ans = dan * i;
-          const row = document.createElement('div');
-          row.className = 'flex items-center justify-between p-2.5 bg-indigo-50/60 rounded-xl hover:bg-indigo-100 transition cursor-pointer';
-          row.onclick = () => SoundEngine.beep(400 + i * 40, 0.1, 'sine', 0.15);
-          row.innerHTML = `
-            <div class="flex items-center gap-2 font-game text-lg text-slate-700">
-              <span class="text-indigo-600">${dan}</span>
-              <span class="text-slate-400 text-sm">×</span>
-              <span>${i}</span>
-            </div>
-            <div class="font-game text-xl text-indigo-700 font-bold">= ${ans}</div>
-          `;
-          content.appendChild(row);
+    spinBtn.addEventListener('click', triggerSpin);
+
+    // Random 10 assignment event listeners
+    quickRandomAssignBtn.addEventListener('click', applyRandom10Assignment);
+    btnTriggerRandom10.addEventListener('click', applyRandom10Assignment);
+    modalRandomAssignBtn.addEventListener('click', () => {
+      const new10 = generateRandom10();
+      rosterInput.value = new10.join('\n');
+      updateTextareaCount();
+      showToast("🎲 10명 생성 완료! (구독, 좋아요, 알림 설정 포함)");
+    });
+
+    // Keyboard Space shortcut
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        const isEditing = document.activeElement === rosterInput || document.activeElement.tagName === 'INPUT';
+        if (!isEditing && winnerModal.classList.contains('hidden') && rosterModal.classList.contains('hidden')) {
+          e.preventDefault();
+          triggerSpin();
         }
       }
-    };
+    });
 
-    window.addEventListener('DOMContentLoaded', () => {
-      Game.init();
+    // Sound toggle
+    soundToggleBtn.addEventListener('click', () => {
+      sound.enabled = !sound.enabled;
+      if (sound.enabled) {
+        sound.initCtx();
+        soundIcon.className = 'fa-solid fa-volume-high text-amber-300';
+        soundText.textContent = '소리 켬';
+        showToast("효과음이 켜졌습니다.");
+      } else {
+        soundIcon.className = 'fa-solid fa-volume-xmark text-slate-400';
+        soundText.textContent = '소리 끔';
+        showToast("효과음이 꺼졌습니다.");
+      }
+    });
+
+    // Exclude toggle checkbox
+    excludePickedToggle.addEventListener('change', (e) => {
+      state.excludeOnPick = e.target.checked;
+      showToast(state.excludeOnPick ? "당첨된 학생은 자동으로 명단에서 제외됩니다." : "중복 추첨이 허용됩니다.");
+    });
+
+    // Quick shuffle button
+    quickShuffleBtn.addEventListener('click', () => {
+      if (state.isSpinning) return;
+      if (state.candidates.length < 2) {
+        showToast("섞을 명단이 2개 이상이어야 합니다.", "warn");
+        return;
+      }
+      shuffleArray(state.candidates);
+      drawRoulette();
+      showToast("학생 순서를 무작위로 섞었습니다! 🔀");
+    });
+
+    // Winner Modal events
+    closeWinnerBtn.addEventListener('click', () => {
+      winnerModal.classList.add('hidden');
+    });
+
+    // Regenerate AI Mission button in winner modal
+    btnRegenAiMission.addEventListener('click', () => {
+      const currentWinner = winnerNameEl.textContent.trim();
+      generateAiPresentationMission(currentWinner);
+    });
+
+    aiMissionSubject.addEventListener('change', () => {
+      const currentWinner = winnerNameEl.textContent.trim();
+      generateAiPresentationMission(currentWinner);
+    });
+
+    // AI Themed Roster button inside roster editor
+    btnGenerateAiRoster.addEventListener('click', () => {
+      generateAiThemedRoster(aiTopicInput.value);
+    });
+
+    // Enter key support on AI Topic Input
+    aiTopicInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        generateAiThemedRoster(aiTopicInput.value);
+      }
+    });
+
+    // AI Quick topic idea chips
+    document.querySelectorAll('.ai-quick-topic').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const topic = btn.getAttribute('data-topic');
+        aiTopicInput.value = topic;
+        generateAiThemedRoster(topic);
+      });
+    });
+
+    spinAgainBtn.addEventListener('click', () => {
+      winnerModal.classList.add('hidden');
+      setTimeout(() => {
+        triggerSpin();
+      }, 250);
+    });
+
+    // Roster Modal open & close
+    openRosterBtn.addEventListener('click', openRosterModal);
+    closeRosterModalBtn.addEventListener('click', closeRosterModal);
+    cancelRosterBtn.addEventListener('click', closeRosterModal);
+
+    rosterInput.addEventListener('input', updateTextareaCount);
+
+    clearAllRosterBtn.addEventListener('click', () => {
+      rosterInput.value = '';
+      updateTextareaCount();
+      showToast("입력창을 모두 비웠습니다.", "warn");
+    });
+
+    // Presets click
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const presetKey = btn.getAttribute('data-preset');
+        if (presetKey === 'random10') {
+          const fresh = generateRandom10();
+          rosterInput.value = fresh.join('\n');
+        } else if (PRESETS[presetKey]) {
+          rosterInput.value = PRESETS[presetKey].join('\n');
+        }
+        updateTextareaCount();
+        showToast(`'${btn.textContent}' 샘플이 입력창에 적용되었습니다.`);
+      });
+    });
+
+    // Restore all excluded students
+    restoreAllExcludedBtn.addEventListener('click', () => {
+      state.candidates = state.candidates.concat(state.excluded);
+      state.excluded = [];
+      rosterInput.value = state.candidates.join('\n');
+      updateUI();
+      showToast("제외되었던 모든 항목을 다시 명단에 추가했습니다.");
+    });
+
+    // Save Roster Modal
+    saveRosterBtn.addEventListener('click', () => {
+      const parsed = parseTextarea(rosterInput.value);
+      if (parsed.length === 0) {
+        showToast("최소 1명 이상의 학생 이름을 입력해주세요!", "warn");
+        return;
+      }
+      state.candidates = parsed;
+      closeRosterModal();
+      updateUI();
+      showToast(`총 ${parsed.length}명의 명단이 저장되었습니다!`);
+    });
+
+    // Initial load setup
+    window.addEventListener('load', () => {
+      updateUI();
+    });
+
+    // Responsive Canvas Resizing support
+    window.addEventListener('resize', () => {
+      drawRoulette();
     });
   </script>
 </body>
